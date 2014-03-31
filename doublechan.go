@@ -7,8 +7,8 @@ type DoubleChan struct {
 	isBuffered   bool
 }
 
-func NewDoubleChan(highPrioChan chan interface{}, lowPrioChan chan interface{}) DoubleChan {
-	return DoubleChan{highPrioChan, lowPrioChan, nil, false}
+func NewDoubleChan(highPrioChan chan interface{}, lowPrioChan chan interface{}) *DoubleChan {
+	return &DoubleChan{highPrioChan, lowPrioChan, nil, false}
 }
 
 func (c *DoubleChan) Select() interface{} {
