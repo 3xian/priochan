@@ -1,38 +1,50 @@
 package priochan
 
-type DoubleChan struct {
-	highPrioChan chan interface{}
-	lowPrioChan  chan interface{}
-	buffer       interface{}
-	isBuffered   bool
-}
+func NewDoubleChan(highPrioChan <-chan interface{}, lowPrioChan <-chan interface{}) <-chan interface{} {
+	mixChan := make(chan interface{})
 
-func NewDoubleChan(highPrioChan chan interface{}, lowPrioChan chan interface{}) *DoubleChan {
-	return &DoubleChan{highPrioChan, lowPrioChan, nil, false}
-}
+	go func() {
+		defer close(mixChan)
 
-func (c *DoubleChan) Select() interface{} {
-	if c.isBuffered {
-		select {
-		case highPrioMsg := <-c.highPrioChan:
-			return highPrioMsg
-		default:
-			c.isBuffered = false
-			return c.buffer
+		for {
+			select {
+			case msg, ok := <-highPrioChan:
+				if ok {
+					mixChan <- msg
+				} else {
+					joinChan(lowPrioChan, mixChan)
+					return
+				}
+			default:
+				select {
+				case msg, ok := <-highPrioChan:
+					if ok {
+						mixChan <- msg
+					} else {
+						joinChan(lowPrioChan, mixChan)
+						return
+					}
+				case msg, ok := <-lowPrioChan:
+					if ok {
+						mixChan <- msg
+					} else {
+						joinChan(highPrioChan, mixChan)
+						return
+					}
+				}
+			}
 		}
-	}
+	}()
 
-	select {
-	case highPrioMsg := <-c.highPrioChan:
-		return highPrioMsg
-	case lowPrioMsg := <-c.lowPrioChan:
-		select {
-		case highPrioMsg := <-c.highPrioChan:
-			c.buffer = lowPrioMsg
-			c.isBuffered = true
-			return highPrioMsg
-		default:
-			return lowPrioMsg
+	return mixChan
+}
+
+func joinChan(in <-chan interface{}, out chan<- interface{}) {
+	for {
+		if msg, ok := <-in; ok {
+			out <- msg
+		} else {
+			return
 		}
 	}
 }

@@ -28,7 +28,7 @@ func TestDoubleChan(t *testing.T) {
 	expects := []string{"two", "one", "one", "one", "two", "two"}
 
 	for _, expect := range expects {
-		msg := doubleChan.Select()
+		msg := <-doubleChan
 		t.Log(msg)
 		if msg != expect {
 			t.Error("Expect:", expect)
