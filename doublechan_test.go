@@ -16,6 +16,7 @@ func TestDoubleChan(t *testing.T) {
 			c1 <- "one"
 			time.Sleep(time.Millisecond * 50)
 		}
+		close(c1)
 	}()
 
 	go func() {
@@ -23,6 +24,7 @@ func TestDoubleChan(t *testing.T) {
 			c2 <- "two"
 			time.Sleep(time.Millisecond * 50)
 		}
+		close(c2)
 	}()
 
 	expects := []string{"two", "one", "one", "one", "two", "two"}

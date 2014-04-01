@@ -3,35 +3,25 @@ package priochan
 type DoubleChan struct {
 	highPrioChan chan interface{}
 	lowPrioChan  chan interface{}
-	buffer       interface{}
-	isBuffered   bool
 }
 
 func NewDoubleChan(highPrioChan chan interface{}, lowPrioChan chan interface{}) *DoubleChan {
-	return &DoubleChan{highPrioChan, lowPrioChan, nil, false}
+	return &DoubleChan{highPrioChan, lowPrioChan}
 }
 
 func (c *DoubleChan) Select() interface{} {
-	if c.isBuffered {
-		select {
-		case highPrioMsg := <-c.highPrioChan:
-			return highPrioMsg
-		default:
-			c.isBuffered = false
-			return c.buffer
-		}
-	}
-
 	select {
-	case highPrioMsg := <-c.highPrioChan:
-		return highPrioMsg
-	case lowPrioMsg := <-c.lowPrioChan:
+	case highPrioMsg, ok := <-c.highPrioChan:
+		if ok {
+			return highPrioMsg
+		} else {
+			return <-c.lowPrioChan
+		}
+	default:
 		select {
 		case highPrioMsg := <-c.highPrioChan:
-			c.buffer = lowPrioMsg
-			c.isBuffered = true
 			return highPrioMsg
-		default:
+		case lowPrioMsg := <-c.lowPrioChan:
 			return lowPrioMsg
 		}
 	}
