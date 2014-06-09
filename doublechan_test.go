@@ -32,9 +32,7 @@ func TestDoubleChan(t *testing.T) {
 	for _, expect := range expects {
 		msg := doubleChan.Select()
 		t.Log(msg)
-		if msg != expect {
-			t.Error("Expect:", expect)
-		}
+		AssertForTest(t, msg, expect)
 		time.Sleep(time.Millisecond * 200)
 	}
 }

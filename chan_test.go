@@ -6,8 +6,7 @@ import (
 )
 
 func TestUnbufferdChan(t *testing.T) {
-	c := NewChan()
-	c.SetSendCompletion(func() { t.Log(time.Now(), "Send finish") })
+	c := NewChan(func() { t.Log(time.Now(), "Send finish") })
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
@@ -29,16 +28,14 @@ func TestUnbufferdChan(t *testing.T) {
 
 	for i := 1; i <= 3; i++ {
 		msg := c.Receive()
-		if msg != i {
-			t.Error("Expect:", i)
-		}
+		AssertForTest(t, msg, i)
 		t.Log(time.Now(), "Receive", msg)
 		time.Sleep(time.Millisecond * 1000)
 	}
 }
 
 func TestBufferdChan(t *testing.T) {
-	c := NewBufferedChan(2)
+	c := NewBufferedChan(2, nil)
 
 	go func() {
 		time.Sleep(time.Millisecond * 500)

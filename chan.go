@@ -1,27 +1,29 @@
 package priochan
 
-import "sync"
-
 // Chan is an alternate to go channel.
 type Chan struct {
-	channel             chan interface{}
-	sendCompletionMutex sync.RWMutex
-	sendCompletion      func()
+	channel        chan interface{}
+	sendCompletion func()
 }
 
 // NewChan makes an unbufferd Chan.
-func NewChan() *Chan {
-	return &Chan{channel: make(chan interface{})}
+// Set sendCompletion to nil if you don't want callback.
+func NewChan(sendCompletion func()) *Chan {
+	return &Chan{
+		channel:        make(chan interface{}),
+		sendCompletion: sendCompletion,
+	}
 }
 
-func NewBufferedChan(size int) *Chan {
-	return &Chan{channel: make(chan interface{}, size)}
+func NewBufferedChan(size int, sendCompletion func()) *Chan {
+	return &Chan{
+		channel:        make(chan interface{}, size),
+		sendCompletion: sendCompletion,
+	}
 }
 
 func (c *Chan) Send(msg interface{}) {
 	c.channel <- msg
-	c.sendCompletionMutex.RLock()
-	defer c.sendCompletionMutex.RUnlock()
 	if c.sendCompletion != nil {
 		c.sendCompletion()
 	}
@@ -29,11 +31,4 @@ func (c *Chan) Send(msg interface{}) {
 
 func (c *Chan) Receive() (msg interface{}) {
 	return <-c.channel
-}
-
-// SetSendCompletion assigns a callback function which will be called after Send.
-func (c *Chan) SetSendCompletion(f func()) {
-	c.sendCompletionMutex.Lock()
-	defer c.sendCompletionMutex.Unlock()
-	c.sendCompletion = f
 }
