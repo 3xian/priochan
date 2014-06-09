@@ -14,7 +14,7 @@ func NewChan() *Chan {
 	return &Chan{channel: make(chan interface{})}
 }
 
-func NewBufferdChan(size int) *Chan {
+func NewBufferedChan(size int) *Chan {
 	return &Chan{channel: make(chan interface{}, size)}
 }
 
@@ -32,8 +32,8 @@ func (c *Chan) Receive() (msg interface{}) {
 }
 
 // SetSendCompletion assigns a callback function which will be called after Send.
-func (c *Chan) SetSendCompletion(cb func()) {
+func (c *Chan) SetSendCompletion(f func()) {
 	c.sendCompletionMutex.Lock()
 	defer c.sendCompletionMutex.Unlock()
-	c.sendCompletion = cb
+	c.sendCompletion = f
 }
